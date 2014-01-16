@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Todo</string>
+    <string name="todo_new_item">New</string>
+    
+    <!-- Hints -->
+    <string name="hint_todo_detail_summary">Summary</string>
+    <string name="hint_todo_detail_description">Description</string>
+    
+    <!-- Actions -->
+    <string name="action_settings">Settings</string>
+    <string name="action_new">New</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    
+    <!-- Toast -->
+    <string name="toast_deleted">Deleted</string>
+    
+    <!-- Other texts -->
+    <string name="text_no_todos">No Todos</string>
+
+</resources>
