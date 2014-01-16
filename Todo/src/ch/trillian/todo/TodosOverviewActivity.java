@@ -2,14 +2,12 @@ package ch.trillian.todo;
 
 import android.app.ListActivity;
 import android.app.LoaderManager.LoaderCallbacks;
-import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -20,6 +18,7 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import ch.trillian.todo.contentprovider.TodoContentProvider;
 import ch.trillian.todo.database.TodoTable;
@@ -34,6 +33,8 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
   @Override
   public void onCreate(Bundle savedInstanceState) {
     
+    Log.w("TODO", "onCreate");
+
     super.onCreate(savedInstanceState);
     setContentView(R.layout.todo_list);
     fillData();
@@ -107,7 +108,9 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
 
   private void fillData() {
 
-    // Fields from the database (projection)
+    Log.w("TODO", "fillData");
+
+		// Fields from the database (projection)
     // Must include the _id column for the adapter to work
     String[] from = new String[] { TodoTable.COLUMN_CATEGORY, TodoTable.COLUMN_SUMMARY };
     // Fields on the UI to which we map
@@ -147,6 +150,8 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
   // creates a new loader after the initLoader() call
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    
+    Log.w("TODO", "onCreateLoader");
     
     String[] projection = { TodoTable.COLUMN_ID, TodoTable.COLUMN_CATEGORY, TodoTable.COLUMN_SUMMARY };
     CursorLoader cursorLoader = new CursorLoader(this, TodoContentProvider.CONTENT_URI, projection, null, null, null);

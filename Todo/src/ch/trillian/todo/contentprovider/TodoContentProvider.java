@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 import ch.trillian.todo.database.TodoDatabaseHelper;
 import ch.trillian.todo.database.TodoTable;
 
@@ -47,7 +48,9 @@ public class TodoContentProvider extends ContentProvider {
   @Override
   public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
 
-    // Using SQLiteQueryBuilder instead of query() method
+    Log.w("TODO", "TodoContentProvider: " + uri);
+    
+	  // Using SQLiteQueryBuilder instead of query() method
     SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
 
     // check if the caller has requested a column which does not exists
