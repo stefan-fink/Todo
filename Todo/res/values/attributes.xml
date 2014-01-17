@@ -1,9 +1,12 @@
 <resources>
-   <declare-styleable name="PlayView">
-       <attr name="showText" format="boolean" />
-       <attr name="labelPosition" format="enum">
-           <enum name="left" value="0"/>
-           <enum name="right" value="1"/>
-       </attr>
-   </declare-styleable>
+
+    <declare-styleable name="PlayView">
+        <attr name="showText" format="boolean" />
+        <attr name="labelPosition" format="enum">
+            <enum name="left" value="0" />
+            <enum name="right" value="1" />
+        </attr>
+        <attr name="labelTextSize" format="dimension" />
+    </declare-styleable>
+
 </resources>
