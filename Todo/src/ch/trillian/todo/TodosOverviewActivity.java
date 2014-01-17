@@ -160,11 +160,17 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
 
   @Override
   public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+    Log.w("TODO", "onLoadFinished");
+
     adapter.swapCursor(data);
   }
 
   @Override
   public void onLoaderReset(Loader<Cursor> loader) {
+    
+    Log.w("TODO", "onLoaderReset");
+
     // data is not available anymore, delete reference
     adapter.swapCursor(null);
   }
