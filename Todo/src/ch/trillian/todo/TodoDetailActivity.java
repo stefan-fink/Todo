@@ -2,6 +2,7 @@ package ch.trillian.todo;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -74,6 +75,13 @@ public class TodoDetailActivity extends Activity {
       saveTodo();
       finish();
       return true;
+    case R.id.action_share:
+      Intent intent = new Intent(Intent.ACTION_SEND);
+      intent.setType("text/plain");
+      intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "TODO: " + summaryView.getText().toString());
+      intent.putExtra(android.content.Intent.EXTRA_TEXT, descriptionView.getText().toString());
+      startActivity(intent); 
+      return true;      
     case R.id.action_delete:
       deleteTodo();
       Toast.makeText(TodoDetailActivity.this, R.string.toast_deleted, Toast.LENGTH_SHORT).show();
