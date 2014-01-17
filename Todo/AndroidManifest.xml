@@ -25,7 +25,12 @@
         
         <activity
             android:name=".TodoDetailActivity"
-            android:windowSoftInputMode="stateVisible|adjustResize"
+            android:windowSoftInputMode="stateHidden|adjustResize"
+            android:parentActivityName=".TodosOverviewActivity" >
+        </activity>
+        
+        <activity
+            android:name=".TodoPlayActivity"
             android:parentActivityName=".TodosOverviewActivity" >
         </activity>
         

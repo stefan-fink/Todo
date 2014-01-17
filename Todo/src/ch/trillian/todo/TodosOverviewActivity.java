@@ -6,6 +6,8 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,6 +32,9 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
   // private Cursor cursor;
   private SimpleCursorAdapter adapter;
 
+  // the icon for urgent todos
+  private static Bitmap urgentBitmap = null;
+  
   @Override
   public void onCreate(Bundle savedInstanceState) {
     
@@ -37,6 +42,12 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.todo_list);
+    
+    // preload bitmap
+    if (urgentBitmap == null) {
+      urgentBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_urgent);
+    }
+    
     fillData();
     registerForContextMenu(getListView());
   }
@@ -53,9 +64,16 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     
+    Intent intent;
+    
     switch (item.getItemId()) {
     case R.id.action_new:
-      createTodo();
+      intent = new Intent(this, TodoDetailActivity.class);
+      startActivity(intent);
+      return true;
+    case R.id.action_play:
+      intent = new Intent(this, TodoPlayActivity.class);
+      startActivity(intent);
       return true;
     }
     
@@ -84,12 +102,6 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
     }
     
     return super.onContextItemSelected(item);
-  }
-
-  private void createTodo() {
-    
-    Intent intent = new Intent(this, TodoDetailActivity.class);
-    startActivity(intent);
   }
 
   // Opens the second activity if an entry is clicked
@@ -135,7 +147,7 @@ public class TodosOverviewActivity extends ListActivity implements LoaderCallbac
           if (cursor.getShort(columnIndex) == 1) {
             iconView.setImageDrawable(null);
           } else {
-            iconView.setImageResource(R.drawable.ic_urgent);
+            iconView.setImageBitmap(urgentBitmap);
           }
           return true;
         }

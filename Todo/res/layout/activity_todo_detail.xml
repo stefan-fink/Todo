@@ -15,6 +15,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="@string/hint_todo_detail_summary"
+            android:inputType="textCapWords"
             android:imeOptions="actionNext" >
         </EditText>
         
@@ -34,7 +35,8 @@
         android:layout_weight="1"
         android:gravity="top"
         android:hint="@string/hint_todo_detail_description"
-        android:imeOptions="actionNext" >
+        android:inputType="textCapSentences|textMultiLine"
+        android:imeOptions="actionDone" >
     </EditText>
 
 </LinearLayout>
