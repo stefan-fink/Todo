@@ -1,6 +1,5 @@
 package ch.trillian.todo.view;
 
-import ch.trillian.todo.R;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -12,6 +11,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import ch.trillian.todo.R;
 
 public class PlayView extends View {
 
@@ -28,17 +28,22 @@ public class PlayView extends View {
   private Paint pointPaint;
   private Path linePath;
 
-  // Positions
+  // view size
+  int sizeX;
+  int sizeY;
+  
+  // position and zoom
+  float positionX = 500;
+  float positionY = 500;
+  float scale = 1.0f;
+
   float lastTouchX;
   float lastTouchY;
   int activePointerId;
-  float pointPosX = 500;
-  float pointPosY = 500;
 
   // zooming
-  private ScaleGestureDetector mScaleGestureDetector;
-  private GestureDetector mGestureDetector;
-  private float mScaleFactor = 1.0f;
+  ScaleGestureDetector mScaleGestureDetector;
+  GestureDetector mGestureDetector;
 
   public PlayView(Context context, AttributeSet attrs) {
 
@@ -63,19 +68,32 @@ public class PlayView extends View {
     // Create our ScaleGestureDetector
     mScaleGestureDetector = new ScaleGestureDetector(context, new ScaleListener());
     mGestureDetector = new GestureDetector(context, new GestureListener());
-
-    Log.w("TODO", "Size: " + getWidth() + ", " + getHeight());
   }
 
   private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
     @Override
     public boolean onScale(ScaleGestureDetector detector) {
 
-      mScaleFactor *= detector.getScaleFactor();
+      float newScale = scale * detector.getScaleFactor();
 
       // Don't let the object get too small or too large.
-      mScaleFactor = Math.max(0.2f, Math.min(mScaleFactor, 5.0f));
+      newScale = Math.max(0.2f, Math.min(newScale, 10.0f));
 
+      float focusX = detector.getFocusX() / scale - positionX;
+      float focusY = detector.getFocusY() / scale - positionY;
+ 
+      positionX = (positionX + focusX) * scale / newScale - focusX;
+      positionY = (positionY + focusY) * scale / newScale - focusY;
+     
+      // px = (posX + x) * scale        => x = px / scale - posX
+      // px1 = (posX1 + x) * scale1 
+      // px2 = (posX2 + x) * scale2
+      // px1 = px2
+      // (posX1 + x) * scale1 = (posX2 + x) * scale2      
+      // posX2 = (posX1 + x) * scale1 / scale2 - x
+      
+      scale = newScale;
+      
       invalidate();
       return true;
     }
@@ -85,16 +103,23 @@ public class PlayView extends View {
     @Override
     public boolean onDoubleTap(MotionEvent e) {
 
-      mScaleFactor = 1.1f;
+      scale = 1.0f;
+      positionX = sizeX / 2;
+      positionY = sizeY / 2;
       invalidate();
       return true;
     }
   }
 
   @Override
+  protected void onSizeChanged (int w, int h, int oldw, int oldh) {
+    
+    sizeX = w;
+    sizeY = h;
+  }
+  
+  @Override
   public boolean onTouchEvent(MotionEvent ev) {
-
-    Log.w("TODO", "onTouchEvent()");
 
     // Let the ScaleGestureDetector inspect all events.
     mScaleGestureDetector.onTouchEvent(ev);
@@ -129,9 +154,9 @@ public class PlayView extends View {
         final float dx = x - lastTouchX;
         final float dy = y - lastTouchY;
 
-        // Move the object
-        pointPosX += dx;
-        pointPosY += dy;
+        // Move the viewport
+        positionX += dx / scale;
+        positionY += dy / scale;
 
         // Invalidate to request a redraw
         invalidate();
@@ -180,34 +205,33 @@ public class PlayView extends View {
 
     super.onDraw(canvas);
 
-    canvas.save();
-    canvas.scale(mScaleFactor, mScaleFactor);
+    textPaint.setTextSize(labelTextSize / 2);
+    canvas.drawText(String.format("x: %4.0f, y: %4.0f %% %4.1f", positionX, positionY, 100 * scale), 0, 0 - textPaint.ascent(), textPaint);
 
-    Log.w("TODO", "Size: " + getWidth() + ", " + getHeight());
+    canvas.save();
+    canvas.scale(scale, scale);
+    canvas.translate(positionX, positionY);
 
     // Draw the label text
     if (isShowText()) {
-      canvas.save();
-      canvas.translate(0, getHeight() / 2);
-      canvas.drawText("Ein grosses Label", getWidth() / 2, textPaint.getTextSize(), textPaint);
-      canvas.drawLine(0, textPaint.getTextSize(), getWidth(), textPaint.getTextSize(), textPaint);
-      canvas.drawLine(0, textPaint.getTextSize() + textPaint.ascent(), getWidth(), textPaint.getTextSize() + textPaint.ascent(), textPaint);
-      canvas.drawLine(0, textPaint.getTextSize() + textPaint.descent(), getWidth(), textPaint.getTextSize() + textPaint.descent(), textPaint);
-      canvas.restore();
+      textPaint.setTextSize(labelTextSize);
+      canvas.drawText("Ein grosses Label", 0, 0 - textPaint.descent(), textPaint);
+      canvas.drawLine(-1000, 0, 1000, 0, textPaint);
+      canvas.drawLine(0, -1000, 0, 1000, textPaint);
     }
 
     linePath.reset();
-    linePath.moveTo(getWidth() / 4, getWidth() / 4);
-    linePath.lineTo(pointPosX, pointPosY);
-    linePath.rLineTo(getWidth() / 4, -getWidth() / 4);
+    linePath.moveTo(0, 500);
+    linePath.lineTo(-500, 0);
+    linePath.lineTo(0, -500);
     canvas.drawPath(linePath, linePaint);
 
     pointPaint.setStyle(Paint.Style.FILL);
     pointPaint.setColor(0xFFFF0000);
-    canvas.drawCircle(pointPosX, pointPosY, 25, pointPaint);
+    canvas.drawCircle(-500, 0, 25, pointPaint);
     pointPaint.setStyle(Paint.Style.STROKE);
     pointPaint.setColor(0xFF000000);
-    canvas.drawCircle(pointPosX, pointPosY, 25, pointPaint);
+    canvas.drawCircle(-500, 0, 25, pointPaint);
 
     canvas.restore();
   }
@@ -228,7 +252,6 @@ public class PlayView extends View {
 
     textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     textPaint.setColor(0xFF000000);
-    textPaint.setTextSize(labelTextSize);
     textPaint.setStrokeWidth(1);
     if (labelPosition == 0) {
       textPaint.setTextAlign(Paint.Align.LEFT);
