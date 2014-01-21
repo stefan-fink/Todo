@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -22,26 +21,29 @@ public class PlayView extends View {
   private int labelPosition;
   private int labelTextSize;
 
-  // Painters
+  // painters and paths
   private Paint textPaint;
   private Paint linePaint;
   private Paint pointPaint;
   private Path linePath;
 
-  // view size
+  // view size in pixel
   int sizeX;
   int sizeY;
   
   // position and zoom
+  // pixelX = (positionX + x) * scale 
+  // x = pixelX / scale - positionX
   float positionX = 500;
   float positionY = 500;
   float scale = 1.0f;
 
+  // stuff for motion detection
   float lastTouchX;
   float lastTouchY;
   int activePointerId;
 
-  // zooming
+  // gesture detectors
   ScaleGestureDetector mScaleGestureDetector;
   GestureDetector mGestureDetector;
 
@@ -49,21 +51,18 @@ public class PlayView extends View {
 
     super(context, attrs);
 
-    Log.w("TODO", "PlayView()");
-
+    // get attributes
     TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.PlayView, 0, 0);
-
     try {
       isShowText = a.getBoolean(R.styleable.PlayView_showText, false);
       labelPosition = a.getInteger(R.styleable.PlayView_labelPosition, 0);
-      Log.w("TODO", "labelPosition: " + labelPosition);
       labelTextSize = a.getDimensionPixelSize(R.styleable.PlayView_labelTextSize, 10);
-      Log.w("TODO", "labelTextSize: " + labelTextSize);
     } finally {
       a.recycle();
     }
 
-    init();
+    // init painters
+    initPainters();
 
     // Create our ScaleGestureDetector
     mScaleGestureDetector = new ScaleGestureDetector(context, new ScaleListener());
@@ -85,13 +84,6 @@ public class PlayView extends View {
       positionX = (positionX + focusX) * scale / newScale - focusX;
       positionY = (positionY + focusY) * scale / newScale - focusY;
      
-      // px = (posX + x) * scale        => x = px / scale - posX
-      // px1 = (posX1 + x) * scale1 
-      // px2 = (posX2 + x) * scale2
-      // px1 = px2
-      // (posX1 + x) * scale1 = (posX2 + x) * scale2      
-      // posX2 = (posX1 + x) * scale1 / scale2 - x
-      
       scale = newScale;
       
       invalidate();
@@ -103,9 +95,11 @@ public class PlayView extends View {
     @Override
     public boolean onDoubleTap(MotionEvent e) {
 
+      // reset viewport
       scale = 1.0f;
       positionX = sizeX / 2;
       positionY = sizeY / 2;
+      
       invalidate();
       return true;
     }
@@ -121,44 +115,45 @@ public class PlayView extends View {
   @Override
   public boolean onTouchEvent(MotionEvent ev) {
 
-    // Let the ScaleGestureDetector inspect all events.
+    // let the ScaleGestureDetector inspect all events.
     mScaleGestureDetector.onTouchEvent(ev);
 
-    // Let the GestureDetector inspect all events.
+    // let the GestureDetector inspect all events.
     mGestureDetector.onTouchEvent(ev);
 
+    final int pointerIndex;
+    final float x;
+    final float y;
+    
     final int action = ev.getAction();
     switch (action & MotionEvent.ACTION_MASK) {
 
-    case MotionEvent.ACTION_DOWN: {
-      final float x = ev.getX();
-      final float y = ev.getY();
-
-      // Remember where we started
-      lastTouchX = x;
-      lastTouchY = y;
+    case MotionEvent.ACTION_DOWN:
+      
+      // remember last touch
+      lastTouchX = ev.getX();
+      lastTouchY = ev.getY();
       activePointerId = ev.getPointerId(0);
-
+      
       break;
-    }
 
-    case MotionEvent.ACTION_MOVE: {
+    case MotionEvent.ACTION_MOVE:
 
-      final int pointerIndex = ev.findPointerIndex(activePointerId);
-      final float x = ev.getX(pointerIndex);
-      final float y = ev.getY(pointerIndex);
+      pointerIndex = ev.findPointerIndex(activePointerId);
+      x = ev.getX(pointerIndex);
+      y = ev.getY(pointerIndex);
 
-      // Only move if the ScaleGestureDetector isn't processing a gesture.
+      // only move if the ScaleGestureDetector isn't processing a gesture.
       if (!mScaleGestureDetector.isInProgress()) {
-        // Calculate the distance moved
+        
+        // calculate the distance moved
         final float dx = x - lastTouchX;
         final float dy = y - lastTouchY;
 
-        // Move the viewport
+        // move the viewport
         positionX += dx / scale;
         positionY += dy / scale;
 
-        // Invalidate to request a redraw
         invalidate();
       }
 
@@ -167,35 +162,26 @@ public class PlayView extends View {
       lastTouchY = y;
 
       break;
-    }
 
-    case MotionEvent.ACTION_UP: {
-
+    case MotionEvent.ACTION_UP:
+    case MotionEvent.ACTION_CANCEL:
       activePointerId = INVALID_POINTER_ID;
       break;
-    }
 
-    case MotionEvent.ACTION_CANCEL: {
-
-      activePointerId = INVALID_POINTER_ID;
-      break;
-    }
-
-    case MotionEvent.ACTION_POINTER_UP: {
-
+    case MotionEvent.ACTION_POINTER_UP:
+      
       // Extract the index of the pointer that left the touch sensor
-      final int pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+      pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
       final int pointerId = ev.getPointerId(pointerIndex);
+      
+      // If it was our active pointer going up then choose a new active pointer and adjust accordingly.
       if (pointerId == activePointerId) {
-        // This was our active pointer going up. Choose a new
-        // active pointer and adjust accordingly.
         final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
         lastTouchX = ev.getX(newPointerIndex);
         lastTouchY = ev.getY(newPointerIndex);
         activePointerId = ev.getPointerId(newPointerIndex);
       }
       break;
-    }
     }
 
     return true;
@@ -248,7 +234,7 @@ public class PlayView extends View {
     requestLayout();
   }
 
-  private void init() {
+  private void initPainters() {
 
     textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     textPaint.setColor(0xFF000000);
@@ -263,7 +249,6 @@ public class PlayView extends View {
     linePaint.setStyle(Paint.Style.STROKE);
     linePaint.setStrokeWidth(15);
     linePaint.setStrokeJoin(Paint.Join.ROUND);
-
     linePath = new Path();
 
     pointPaint = new Paint(0);
