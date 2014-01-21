@@ -20,6 +20,8 @@ public class PlayView extends View {
   private boolean isShowText;
   private int labelPosition;
   private int labelTextSize;
+  
+  private String labelText;
 
   // painters and paths
   private Paint textPaint;
@@ -201,7 +203,7 @@ public class PlayView extends View {
     // Draw the label text
     if (isShowText()) {
       textPaint.setTextSize(labelTextSize);
-      canvas.drawText("Ein grosses Label", 0, 0 - textPaint.descent(), textPaint);
+      canvas.drawText(labelText, 0, 0 - textPaint.descent(), textPaint);
       canvas.drawLine(-1000, 0, 1000, 0, textPaint);
       canvas.drawLine(0, -1000, 0, 1000, textPaint);
     }
@@ -232,6 +234,17 @@ public class PlayView extends View {
     this.isShowText = showText;
     invalidate();
     requestLayout();
+  }
+
+  public String getLabelText() {
+
+    return labelText;
+  }
+
+  public void setLabelText(String labelText) {
+
+    this.labelText = labelText;
+    invalidate();
   }
 
   private void initPainters() {
