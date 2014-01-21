@@ -39,8 +39,8 @@ public class TodoPlayActivity extends Activity {
     double x = 200147.07 + 308807.95*p + 3745.25*l*l + 76.63*p*p + 119.79*p*p*p - 194.56*l*l*p;
     double y = 600072.37 + 211455.93*l - 10938.51*l*p - 0.36*l*p*p - 44.54*l*l*l;
     
-    String locationString = String.format("CH: (%3.0f, %3.0f)", x, y);
     Log.w("TODO", "CH: (" + x + ", " + y + ")");
+    String locationString = String.format("CH: (%3.0f, %3.0f)", x, y);
     playView.setLabelText(locationString);
   }
   
