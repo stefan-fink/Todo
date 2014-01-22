@@ -1,11 +1,15 @@
 package ch.trillian.todo.view;
 
+import java.text.SimpleDateFormat;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.location.Location;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -21,7 +25,7 @@ public class PlayView extends View {
   private int labelPosition;
   private int labelTextSize;
   
-  private String labelText;
+  private String labelText = "This is a label";
 
   // painters and paths
   private Paint textPaint;
@@ -48,6 +52,16 @@ public class PlayView extends View {
   // gesture detectors
   ScaleGestureDetector mScaleGestureDetector;
   GestureDetector mGestureDetector;
+
+  // current location stuff
+  private Location location;
+  private String latitudeText;
+  private String longitudeText;
+  private String altitudeText;
+  private String accuracyText;
+  private String speedText;
+  private String bearingText;
+  private String timeText;
 
   public PlayView(Context context, AttributeSet attrs) {
 
@@ -194,7 +208,22 @@ public class PlayView extends View {
     super.onDraw(canvas);
 
     textPaint.setTextSize(labelTextSize / 2);
+    float y = 0 - textPaint.ascent();
     canvas.drawText(String.format("x: %4.0f, y: %4.0f %% %4.1f", positionX, positionY, 100 * scale), 0, 0 - textPaint.ascent(), textPaint);
+    y += textPaint.getTextSize();
+    canvas.drawText(longitudeText, 0, y, textPaint);
+    y += textPaint.getTextSize();
+    canvas.drawText(latitudeText, 0, y, textPaint);
+    y += textPaint.getTextSize();
+    canvas.drawText(altitudeText, 0, y, textPaint);
+    y += textPaint.getTextSize();
+    canvas.drawText(speedText, 0, y, textPaint);
+    y += textPaint.getTextSize();
+    canvas.drawText(bearingText, 0, y, textPaint);
+    y += textPaint.getTextSize();
+    canvas.drawText(accuracyText, 0, y, textPaint);
+    y += textPaint.getTextSize();
+    canvas.drawText(timeText, 0, y, textPaint);
 
     canvas.save();
     canvas.scale(scale, scale);
@@ -247,6 +276,65 @@ public class PlayView extends View {
     invalidate();
   }
 
+  public Location getLocation() {
+    
+    return location;
+  }
+  
+  public void wgs84toCh1903(double latitude, double longitude, double altitude, double[] result) {
+    
+    // calculate ch1903 coordinates
+    double p = (latitude*3600.0 - 169028.66) / 10000.0;
+    double l = (longitude*3600.0 - 26782.5) / 10000.0;
+    double x = 200147.07 + 308807.95*p + 3745.25*l*l + 76.63*p*p + 119.79*p*p*p - 194.56*l*l*p;
+    double y = 600072.37 + 211455.93*l - 10938.51*l*p - 0.36*l*p*p - 44.54*l*l*l;
+    double h = altitude - 49.55 + 2.73*l + 6.94*p;
+    
+    result[0] = x;
+    result[1] = y;
+    result[2] = h;
+  }
+  
+  public void ch1903toWgs84to(double x, double y, double h, double[] result) {
+    
+    // calculate wgs84 coordinates
+    y = (y - 600000)/1000000.0;
+    x = (x - 200000)/1000000.0;
+
+    double l = 2.6779094 + 4.728982*y + 0.791484*y*x + 0.1306*y*x*x - 0.0436*y*y*y;
+    double p = 16.9023892 + 3.238272*x - 0.270978*y*y - 0.002528*x*x - 0.0447*y*y*x - 0.0140*x*x*x; 
+    double a = h + 49.55 - 12.60*y - 22.64*x;
+    l = l * 100 / 36;
+    p = p * 100 / 36;
+
+    result[0] = p;
+    result[1] = l;
+    result[2] = a;
+  }
+  
+  public void setLocation(Location location) {
+  
+    this.location = location;
+
+    // convert to ch1903
+    double[] result = new double[3];
+    wgs84toCh1903(location.getLatitude(), location.getLongitude(), location.getAltitude(), result);
+    double x = result[0];
+    double y = result[1];
+    double h = result[2];
+
+    // prepare texts
+    latitudeText = String.format("Latitidue: %3.0f", x);
+    longitudeText = String.format("Longitude: %3.0f", y);
+    altitudeText = location.hasAltitude() ? String.format("Altitude: %3.0f m", h) : "Altitude: -";
+    speedText = location.hasSpeed() ? String.format("Speed: %3.0f km/h", location.getSpeed() * 3.6) : "Speed: -";
+    bearingText = location.hasBearing() ? String.format("Bearing: %3.0f", location.getBearing()) : "Bearing: -";
+    accuracyText = location.hasAccuracy() ? String.format("Accuracy: %3.0f m", location.getAccuracy()) : "Accuracy: -";
+    timeText = String.format("Time: %s", new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(location.getTime()));
+    
+    invalidate();
+  }
+  
   private void initPainters() {
 
     textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
