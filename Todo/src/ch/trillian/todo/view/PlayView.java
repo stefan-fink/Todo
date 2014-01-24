@@ -4,12 +4,12 @@ import java.text.SimpleDateFormat;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.location.Location;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -26,7 +26,8 @@ public class PlayView extends View {
   private int labelTextSize;
   
   private String labelText = "This is a label";
-
+  private Bitmap bitmap = null;
+  
   // painters and paths
   private Paint textPaint;
   private Paint linePaint;
@@ -237,6 +238,10 @@ public class PlayView extends View {
       canvas.drawLine(0, -1000, 0, 1000, textPaint);
     }
 
+    if (bitmap != null) {
+      canvas.drawBitmap(bitmap, -256, 0, linePaint);
+    }
+    
     linePath.reset();
     linePath.moveTo(0, 500);
     linePath.lineTo(-500, 0);
@@ -273,6 +278,12 @@ public class PlayView extends View {
   public void setLabelText(String labelText) {
 
     this.labelText = labelText;
+    invalidate();
+  }
+
+  public void setBitmap(Bitmap bitmap) {
+
+    this.bitmap = bitmap;
     invalidate();
   }
 
